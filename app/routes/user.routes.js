@@ -43,9 +43,9 @@ router.get("/api/subcategories/:categoryId", async (req, res) => {
       const options = await category.find();
   
       // Extract unique categories
-      const uniqueCategories = [...new Set(options.map(opt => opt.category))];
+      const categories = [...new Set(options.map(opt => opt.category))];
   
-      res.json(uniqueCategories);
+      res.json(categories);
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: "Server error" });
