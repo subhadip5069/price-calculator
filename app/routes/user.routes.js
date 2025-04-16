@@ -40,10 +40,10 @@ router.get("/api/subcategories/:categoryId", async (req, res) => {
   });
   router.get("/api/categories", async (req, res) => {
     try {
-      const options = await category.find();
+      const categories = await category.find();
   
       // Extract unique categories
-      const categories = [...new Set(options.map(opt => opt.category))];
+      // const categories = [...new Set(options.map(opt => opt.category))];
   
       res.json(categories);
     } catch (err) {
