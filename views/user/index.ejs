@@ -33,6 +33,183 @@
         <span style="font-size: 20px;"><b>Print</b>shala.in</span>
       </a>
 
+      <hr class="my-5">
+
+<h4 class="mb-3">Calculator Options Table</h4>
+
+<div class="container bg-white p-4 rounded shadow" style="max-width: 900px;">
+  <h3 class="text-center mb-4">Dynamic Calculator</h3>
+
+  <!-- Category & Sub Category -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <label for="categorySelect" class="form-label">Category</label>
+      <select id="categorySelect" class="form-select">
+        <option value="">Select Category</option>
+        <% categories.forEach(cat => { %>
+          <option value="<%= cat._id %>"><%= cat.name %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label for="subCategorySelect" class="form-label">Sub Category</label>
+      <select id="subCategorySelect" class="form-select">
+        <option value="">Select Sub Category</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Copies & Pages -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <label for="copies" class="form-label">Copies</label>
+      <input type="number" id="copies" class="form-control" min="1" value="1">
+    </div>
+    <div class="col-md-6">
+      <label for="pages" class="form-label">Pages</label>
+      <input type="number" id="pages" class="form-control" min="1" value="1">
+    </div>
+  </div>
+
+  <!-- Dynamic Fields -->
+  <form id="calculatorForm" method="POST" action="">
+    <div class="row" id="dynamic-fields"></div>
+
+    <!-- Preview of selections -->
+    <div class="mt-4" id="selection-preview" style="display: none;">
+      <div class="row" id="previewItems" style="flex-wrap: wrap; gap: 10px;"></div>
+      <div class="row mt-3">
+        <div class="col-auto bg-dark text-white p-2 rounded">PRINTING COST : ₹ <span id="printingCost">0.00</span></div>
+        <div class="col-auto bg-dark text-white p-2 rounded">COVER OPTION : ₹ <span id="coverCost">0.00</span></div>
+      </div>
+      <div class="mt-3 p-2 bg-success text-white rounded" style="width: fit-content;">
+        TOTAL COST : ₹ <span id="totalPrice">0.00</span>/-
+      </div>
+    </div>
+
+    <div class="mt-4 text-end">
+     
+    </div>
+  </form>
+</div>
+
+<script>
+  const categorySelect = document.querySelector('#categorySelect');
+  const subCategorySelect = document.querySelector('#subCategorySelect');
+  const dynamicFieldsContainer = document.querySelector('#dynamic-fields');
+  const previewContainer = document.querySelector('#selection-preview');
+  const previewItems = document.querySelector('#previewItems');
+  const totalPriceDisplay = document.querySelector('#totalPrice');
+  const printingCostDisplay = document.querySelector('#printingCost');
+  const coverCostDisplay = document.querySelector('#coverCost');
+
+  categorySelect.addEventListener('change', loadSubCategories);
+  subCategorySelect.addEventListener('change', loadFields);
+  document.querySelector('#copies').addEventListener('input', updatePricePreview);
+  document.querySelector('#pages').addEventListener('input', updatePricePreview);
+
+
+  async function loadSubCategories() {
+    const categoryId = categorySelect.value;
+    subCategorySelect.innerHTML = '<option value="">Select Sub Category</option>';
+    if (!categoryId) return;
+
+    const res = await fetch(`api/subcategories/${categoryId}`);
+    const subCategories = await res.json();
+
+    subCategories.forEach(sub => {
+      const option = document.createElement('option');
+      option.value = sub;
+      option.textContent = sub;
+      subCategorySelect.appendChild(option);
+    });
+  }
+
+  async function loadFields() {
+    const categoryId = categorySelect.value;
+    const subCategory = subCategorySelect.value;
+    if (!categoryId || !subCategory) return;
+
+    const res = await fetch(`/api/calculator-options/${categoryId}/${subCategory}`);
+    const fields = await res.json();
+
+    dynamicFieldsContainer.innerHTML = '';
+    previewItems.innerHTML = '';
+    previewContainer.style.display = 'none';
+
+    fields.forEach((field, index) => {
+      const col = document.createElement('div');
+      col.className = 'col-md-3 mb-3';
+
+      const label = document.createElement('label');
+      label.className = 'form-label';
+      label.textContent = field.key.toUpperCase() + ":";
+
+      const select = document.createElement('select');
+      select.className = 'form-select calculator-option';
+      select.name = `fields[${field.key}]`;
+
+      field.values.forEach(val => {
+        const option = document.createElement('option');
+        option.value = val.name;
+        option.textContent = `${val.name}`;
+        option.dataset.price = val.price || 0;
+        select.appendChild(option);
+      });
+
+      select.addEventListener('change', updatePricePreview);
+
+      col.appendChild(label);
+      col.appendChild(select);
+      dynamicFieldsContainer.appendChild(col);
+    });
+
+    updatePricePreview();
+  }
+
+  function updatePricePreview() {
+    const selectedOptions = document.querySelectorAll('.calculator-option');
+    const copies = parseInt(document.querySelector('#copies').value) || 1;
+    const pages = parseInt(document.querySelector('#pages').value) || 1;
+
+    let printingCost = 0;
+    let coverCost = 0;
+    let total = 0;
+
+    previewItems.innerHTML = '';
+
+    selectedOptions.forEach(select => {
+      const selected = select.options[select.selectedIndex];
+      const label = select.previousElementSibling.textContent.replace(':', '');
+      const price = parseFloat(selected.dataset.price) || 0;
+
+      // Preview Item
+      const preview = document.createElement('div');
+      preview.className = 'bg-light border p-2 rounded';
+      preview.innerHTML = `${label} : <span style="color: orange; font-weight: bold;">${selected.value.toUpperCase()}</span>`;
+      previewItems.appendChild(preview);
+
+      // Price calculation
+      if (label.toLowerCase().includes('cover')) {
+        coverCost += price;
+      } else {
+        printingCost += price;
+      }
+    });
+
+    const pricePerPage = printingCost;
+    total = (pricePerPage * copies * pages) + coverCost;
+
+    printingCostDisplay.textContent = (pricePerPage * copies * pages).toFixed(2);
+    coverCostDisplay.textContent = coverCost.toFixed(2);
+    totalPriceDisplay.textContent = total.toFixed(2);
+
+    previewContainer.style.display = 'block';
+  }
+</script>
+
+
+  
       <!-- Menu -->
       <div class="collapse navbar-collapse justify-content-end">
         <ul class="navbar-nav mb-2 mb-lg-0">
