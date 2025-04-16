@@ -3,7 +3,8 @@ const router = express.Router();
 
 const CalculatorOption = require('../model/calculator')
 
-const calculator = require("../controller/user.calculator")
+const calculator = require("../controller/user.calculator");
+const category = require('../model/category');
 
 router.get('/',calculator.renderCreateForm)
 router.get("/api/subcategories/:categoryId", async (req, res) => {
@@ -21,19 +22,7 @@ router.get("/api/subcategories/:categoryId", async (req, res) => {
       res.status(500).json({ message: "Server error" });
     }
   });
-  router.get("/api/categories", async (req, res) => {
-    try {
-      const options = await CalculatorOption.find();
   
-      // Extract unique categories
-      const uniqueCategories = [...new Set(options.map(opt => opt.category))];
-  
-      res.json(uniqueCategories);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Server error" });
-    }
-  });
   // 🔹 Get fields based on category and subcategory
   router.get("/api/calculator-options/:categoryId/:subCategory", async (req, res) => {
     try {
@@ -49,4 +38,18 @@ router.get("/api/subcategories/:categoryId", async (req, res) => {
       res.status(500).json({ message: "Server error" });
     }
   });
+  router.get("/api/categories", async (req, res) => {
+    try {
+      const options = await category.find();
+  
+      // Extract unique categories
+      const uniqueCategories = [...new Set(options.map(opt => opt.category))];
+  
+      res.json(uniqueCategories);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+  
 module.exports =router
