@@ -21,7 +21,19 @@ router.get("/api/subcategories/:categoryId", async (req, res) => {
       res.status(500).json({ message: "Server error" });
     }
   });
+  router.get("/api/categories", async (req, res) => {
+    try {
+      const options = await CalculatorOption.find();
   
+      // Extract unique categories
+      const uniqueCategories = [...new Set(options.map(opt => opt.category))];
+  
+      res.json(uniqueCategories);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
   // 🔹 Get fields based on category and subcategory
   router.get("/api/calculator-options/:categoryId/:subCategory", async (req, res) => {
     try {
