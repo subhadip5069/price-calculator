@@ -8,15 +8,15 @@ class CategoryController {
             const { name } = req.body;
             const newCategory = new category({ name });
             await newCategory.save();
-            res.redirect("/admin/cat")
+            res.redirect("/admin/calculator")
         } catch (error) {
-           res.redirect("/admin/cat")
+           res.redirect("/admin/calculator")
         }
     }
    deleteCategory = async (req, res) => {
         try {
           await category.findByIdAndDelete(req.params.id);
-          res.redirect("/admin/cat");
+          res.redirect("/admin/calculator");
         } catch (err) {
           res.status(500).send("Error deleting category");
         }
@@ -30,7 +30,7 @@ class CategoryController {
             categories
            })
         } catch (error) {
-           res.redirect("/admin/cat")
+           res.redirect("/admin/calculator")
         }
     }
     // Get a category by ID
